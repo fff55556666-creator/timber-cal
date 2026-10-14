@@ -1,0 +1,302 @@
+```html
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="manifest.json">
+    <title>Кубатурник необрезной доски</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #printable-section, #printable-section * {
+                visibility: visible;
+            }
+            #printable-section {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                background: white;
+                padding: 20px;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen font-sans antialiased">
+
+    <!-- Верхняя шапка -->
+    <header class="bg-slate-800 border-b border-slate-700 sticky top-0 z-50 shadow-md">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-emerald-600 p-2 rounded-lg flex items-center justify-center">
+                    <!-- Иконка брёвен/пилорамы (SVG) -->
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-tight text-white leading-tight">Кубатурник досок</h1>
+                    <p class="text-xs text-slate-400">Учёт необрезного пиломатериала</p>
+                </div>
+            </div>
+            <div class="text-right">
+                <span id="header-total-vol" class="text-emerald-400 font-mono font-bold text-lg">0.0000 м³</span>
+                <div class="text-[10px] text-slate-400 uppercase tracking-wider">Всего объём</div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 py-4 space-y-4">
+
+        <!-- Панель управления текущим стволом и параметрами -->
+        <section class="bg-slate-800 border border-slate-700 rounded-xl p-3 shadow-sm space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-700/60 pb-2.5">
+                <div class="flex items-center space-x-2">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Ствол №</span>
+                    <span id="current-stem-badge" class="bg-emerald-900/80 text-emerald-300 font-mono text-sm font-bold px-2.5 py-0.5 rounded border border-emerald-700/50">1</span>
+                    <button onclick="nextStem()" class="no-print bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium px-2.5 py-1 rounded transition shadow-sm flex items-center space-x-1">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        <span>Новый ствол</span>
+                    </button>
+                </div>
+                <div class="flex items-center space-x-3 text-xs">
+                    <span class="text-slate-400">Длина (м):</span>
+                    <input type="number" id="board-length" value="6.0" step="0.1" min="0.5" max="12.0" class="w-16 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-center font-mono text-white focus:outline-none focus:border-emerald-500">
+                </div>
+            </div>
+
+            <!-- Толщина доски (30, 32, 40, 50, 52 мм) -->
+            <div class="flex items-center justify-between text-xs pt-1 flex-wrap gap-2">
+                <span class="text-slate-400 font-medium">Толщина доски:</span>
+                <div class="flex flex-wrap gap-1.5" id="thickness-buttons">
+                    <button onclick="setThickness(30)" id="btn-thick-30" class="px-2.5 py-1 rounded font-mono font-bold transition border border-slate-700 bg-slate-900 text-slate-300 hover:bg-slate-700">30 мм</button>
+                    <button onclick="setThickness(32)" id="btn-thick-32" class="px-2.5 py-1 rounded font-mono font-bold transition border border-slate-700 bg-emerald-600 text-white shadow-sm">32 мм</button>
+                    <button onclick="setThickness(40)" id="btn-thick-40" class="px-2.5 py-1 rounded font-mono font-bold transition border border-slate-700 bg-slate-900 text-slate-300 hover:bg-slate-700">40 мм</button>
+                    <button onclick="setThickness(50)" id="btn-thick-50" class="px-2.5 py-1 rounded font-mono font-bold transition border border-slate-700 bg-slate-900 text-slate-300 hover:bg-slate-700">50 мм</button>
+                    <button onclick="setThickness(52)" id="btn-thick-52" class="px-2.5 py-1 rounded font-mono font-bold transition border border-slate-700 bg-slate-900 text-slate-300 hover:bg-slate-700">52 мм</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Сетка выбора ширины (10 - 50 см) -->
+        <section class="bg-slate-800 border border-slate-700 rounded-xl p-3 shadow-sm space-y-2.5">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center space-x-1.5">
+                    <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                    <span>Выберите ширину доски (см):</span>
+                </h2>
+                <span class="text-[11px] text-slate-400 font-mono">Клик добавляет в ствол</span>
+            </div>
+            
+            <!-- Кнопки ширин от 10 до 50 -->
+            <div id="width-buttons-grid" class="grid grid-cols-5 sm:grid-cols-9 gap-1.5">
+                <!-- Динамически заполняется скриптом -->
+            </div>
+        </section>
+
+        <!-- Секция таблиц и отчётов -->
+        <section id="printable-section" class="bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-sm space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-700 pb-3">
+                <div>
+                    <h2 class="text-sm font-bold text-white flex items-center space-x-2">
+                        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                        <span>Журнал распила и замеры</span>
+                    </h2>
+                    <p class="text-xs text-slate-400">Детализация по каждому бревну</p>
+                </div>
+                <div class="no-print flex space-x-2">
+                    <button onclick="window.print()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs px-3 py-1.5 rounded-lg border border-slate-600 transition flex items-center space-x-1">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                        <span>Печать</span>
+                    </button>
+                    <button onclick="clearAllData()" class="bg-red-900/40 hover:bg-red-900/70 text-red-300 text-xs px-3 py-1.5 rounded-lg border border-red-700/50 transition">
+                        Сброс
+                    </button>
+                </div>
+            </div>
+
+            <!-- Контейнер для списка бревён/таблиц -->
+            <div id="stems-container" class="space-y-4">
+                <div class="text-center py-8 text-slate-500 text-sm italic">
+                    Пока нет добавленных досок. Выберите ширину выше, чтобы начать замеры.
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Скрипт логики расчёта -->
+    <script>
+        let currentThickness = 32;
+        let stems = JSON.parse(localStorage.getItem('timber_stems_v2')) || [];
+        let activeStemId = stems.length > 0 ? stems[stems.length - 1].id : 1;
+
+        if (stems.length === 0) {
+            stems.push({ id: 1, timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), boards: [] });
+            activeStemId = 1;
+        }
+
+        // Инициализация сетки кнопок ширины от 10 до 50 см
+        const grid = document.getElementById('width-buttons-grid');
+        for (let w = 10; w <= 50; w += 2) {
+            let btn = document.createElement('button');
+            btn.className = "bg-slate-900 hover:bg-emerald-600 hover:text-white text-slate-200 font-mono font-semibold py-2 rounded-lg border border-slate-700 transition text-sm shadow-sm active:scale-95";
+            btn.innerText = w;
+            btn.onclick = () => addBoard(w);
+            grid.appendChild(btn);
+        }
+
+        function setThickness(val) {
+            currentThickness = val;
+            [30, 32, 40, 50, 52].forEach(t => {
+                const btn = document.getElementById(`btn-thick-${t}`);
+                if (btn) {
+                    btn.className = t === val 
+                        ? "px-2.5 py-1 rounded font-mono font-bold transition border border-slate-700 bg-emerald-600 text-white shadow-sm"
+                        : "px-2.5 py-1 rounded font-mono font-bold transition border border-slate-700 bg-slate-900 text-slate-300 hover:bg-slate-700";
+                }
+            });
+        }
+
+        function nextStem() {
+            const nextId = stems.length > 0 ? Math.max(...stems.map(s => s.id)) + 1 : 1;
+            stems.push({
+                id: nextId,
+                timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                boards: []
+            });
+            activeStemId = nextId;
+            saveAndRender();
+        }
+
+        function addBoard(widthCm) {
+            const lengthM = parseFloat(document.getElementById('board-length').value) || 6.0;
+            
+            // V = Длина (м) * Ширина (см) * Толщина (мм) / 10000
+            const volume = (lengthM * widthCm * currentThickness) / 10000;
+
+            let stem = stems.find(s => s.id === activeStemId);
+            if (!stem) {
+                stem = { id: activeStemId, timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), boards: [] };
+                stems.push(stem);
+            }
+
+            stem.boards.push({
+                id: Date.now() + Math.random(),
+                length: lengthM,
+                width: widthCm,
+                thickness: currentThickness,
+                volume: volume
+            });
+
+            saveAndRender();
+        }
+
+        function deleteBoard(stemId, boardId) {
+            let stem = stems.find(s => s.id === stemId);
+            if (stem) {
+                stem.boards = stem.boards.filter(b => b.id !== boardId);
+                saveAndRender();
+            }
+        }
+
+        function saveAndRender() {
+            localStorage.setItem('timber_stems_v2', JSON.stringify(stems));
+            render();
+        }
+
+        function clearAllData() {
+            stems = [{ id: 1, timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), boards: [] }];
+            activeStemId = 1;
+            saveAndRender();
+        }
+
+        function render() {
+            document.getElementById('current-stem-badge').innerText = activeStemId;
+            
+            let container = document.getElementById('stems-container');
+            let totalVolumeAll = 0;
+            
+            if (stems.length === 0 || stems.every(s => s.boards.length === 0)) {
+                container.innerHTML = `<div class="text-center py-8 text-slate-500 text-sm italic">Пока нет добавленных досок. Выберите ширину выше, чтобы начать замеры.</div>`;
+                document.getElementById('header-total-vol').innerText = "0.0000 м³";
+                return;
+            }
+
+            let html = '';
+
+            stems.forEach(stem => {
+                if (stem.boards.length === 0) return;
+                
+                let stemVolume = stem.boards.reduce((acc, b) => acc + b.volume, 0);
+                totalVolumeAll += stemVolume;
+
+                html += `
+                    <div class="bg-slate-900/60 border border-slate-700/80 rounded-lg p-3 space-y-2">
+                        <div class="flex items-center justify-between text-xs border-b border-slate-800 pb-2">
+                            <div class="flex items-center space-x-2">
+                                <span class="bg-emerald-600/20 text-emerald-400 font-bold px-2 py-0.5 rounded border border-emerald-500/30 font-mono">Ствол №${stem.id}</span>
+                                <span class="text-slate-400">${stem.timestamp}</span>
+                            </div>
+                            <div class="font-mono text-emerald-400 font-bold">
+                                Итого ствол: ${stemVolume.toFixed(4)} м³
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs font-mono">
+                                <thead>
+                                    <tr class="text-slate-500 border-b border-slate-800">
+                                        <th class="py-1 px-1.5 w-10">№</th>
+                                        <th class="py-1 px-1.5">Дл (м)</th>
+                                        <th class="py-1 px-1.5">Толщ</th>
+                                        <th class="py-1 px-1.5">Шир (см)</th>
+                                        <th class="py-1 px-1.5 text-right">Объём (м³)</th>
+                                        <th class="py-1 px-1.5 text-right no-print w-12">Действ</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-800/60 text-slate-300">
+                `;
+
+                stem.boards.forEach((board, index) => {
+                    html += `
+                        <tr class="hover:bg-slate-800/40">
+                            <td class="py-1.5 px-1.5 text-slate-500">${index + 1}</td>
+                            <td class="py-1.5 px-1.5">${board.length}</td>
+                            <td class="py-1.5 px-1.5">${board.thickness}мм</td>
+                            <td class="py-1.5 px-1.5 font-bold text-white">${board.width}</td>
+                            <td class="py-1.5 px-1.5 text-right text-emerald-300">${board.volume.toFixed(4)}</td>
+                            <td class="py-1.5 px-1.5 text-right no-print">
+                                <button onclick="deleteBoard(${stem.id}, ${board.id})" class="text-red-400 hover:text-red-300 p-1 rounded transition" title="Удалить запись">
+                                    <svg class="w-3.5 h-3.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+            document.getElementById('header-total-vol').innerText = totalVolumeAll.toFixed(4) + " м³";
+        }
+
+        render();
+    </script>
+</body>
+</html>
+```
